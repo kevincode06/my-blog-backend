@@ -13,7 +13,7 @@ app.use(bodyParser.json());
 // Get all blog posts
 app.get('/posts', async (req, res) => {
     try {
-        const [posts] = await db.query('SELECT * FROM posts');
+        const [posts] = await db.query('SELECT * FROM blog_db.posts');
         res.json(posts);
     } catch (error) {
         res.status(500).json({ error: error.message });
