@@ -1,14 +1,25 @@
 const mysql = require('mysql2');
-require('dotenv').config();
 
 const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASS,
-  database: process.env.DB_NAME,
+  host: '127.0.0.1',
+  user: 'root',
+  password: 'mafuta19650',
+  database: 'blog_db',
   waitForConnections: true,
-  connectionLimit: 10,
+  connectionLimit: 30,
   queueLimit: 0
 });
+
+async function getPosts() {
+  try {
+    // Use await with the Promise-based query
+    const [rows] = await pool.promise().query("SELECT * FROM school.melsoft");
+    console.log(rows);
+  } catch (err) {
+    console.log(err);
+  }
+}
+
+getPosts();
 
 module.exports = pool.promise();
