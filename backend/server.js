@@ -1,81 +1,63 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
-const fs = require('fs');
 const bodyParser = require('body-parser');
+const db = require('./models/db'); // Import MySQL database connection
+require('dotenv').config();
 
 const app = express();
-const port = 4000;
+const port = process.env.PORT || 4000;
 
 // Middleware
 app.use(bodyParser.json());
 
-// Helper function to read JSON file
-const readPosts = () => {
-    const postsData = fs.readFileSync('posts.json');
-    return JSON.parse(postsData);
-};
-
-// const posts = readPosts();
-// console.log(posts); 
-
-// Helper function to write JSON file
-const writePosts = (data) => {
-    fs.writeFileSync('posts.json', JSON.stringify(data, null, 2));
-};
-
-// Routes
-
 // Get all blog posts
-app.get('/posts', (req, res) => {
-    const posts = readPosts();
-    res.json(posts);
-});
-
-// Get a single blog post
-app.get('/posts/:id', (req, res) => {
-    const posts = readPosts();
- console.log(posts)
-    const post = posts.find(p => p.id == parseInt(req.params.id));
-    if (post) {
-        res.json(post);
-    } else {
-        res.status(404).json({ message: 'Post not found' });
+app.get('/posts', async (req, res) => {
+    try {
+        const [posts] = await db.query('SELECT * FROM posts');
+        res.json(posts);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 });
 
-// Create a new post (simple example, no authentication here)
-app.post('/posts', (req, res) => {
+// Get a single blog post
+app.get('/posts/:id', async (req, res) => {
+    try {
+        const [posts] = await db.query('SELECT * FROM posts WHERE id = ?', [req.params.id]);
+        if (posts.length > 0) {
+            res.json(posts[0]);
+        } else {
+            res.status(404).json({ message: 'Post not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Create a new post
+app.post('/posts', async (req, res) => {
     const { title, content } = req.body;
-    const posts = readPosts();
-    const newPost = {
-        id: posts.length + 1,
-        title,
-        content,
-        createdAt: new Date().toISOString()
-    };
-    posts.push(newPost);
-    writePosts(posts);
-    res.status(201).json(newPost);
+    try {
+        const [result] = await db.query('INSERT INTO posts (title, content, createdAt) VALUES (?, ?, NOW())', [title, content]);
+        res.status(201).json({ id: result.insertId, title, content, createdAt: new Date() });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
 // Delete a post
-app.delete('/posts/:id', (req, res) => {
-    const posts = readPosts();
-    const updatedPosts = posts.filter(p => p.id !== parseInt(req.params.id));
-    writePosts(updatedPosts);
-    res.status(200).json({ message: 'Post deleted' });
+app.delete('/posts/:id', async (req, res) => {
+    try {
+        await db.query('DELETE FROM posts WHERE id = ?', [req.params.id]);
+        res.status(200).json({ message: 'Post deleted' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
-// Example for handling user authentication and password encryption
-app.post('/register', (req, res) => {
-    const { username, password } = req.body;
-    const hashedPassword = bcrypt.hashSync(password, 10);
-    const user = { username, password: hashedPassword };
 
-    
-    res.status(201).json({ message: 'User registered', user });
+
+// Start the server
+app.listen(port, () => {
+    console.log(`Server is running on http://localhost:${port}`);
 });
-
-    app.listen(port, () => {
-        console.log(`Server is running on http://localhost:${port}`);
-    });
