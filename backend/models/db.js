@@ -13,7 +13,7 @@ const pool = mysql.createPool({
 async function getPosts() {
   try {
     // Use await with the Promise-based query
-    const [rows] = await pool.promise().query("SELECT * FROM school.melsoft");
+    const [rows] = await pool.promise().query("SELECT * FROM blog_db.posts");  
     console.log(rows);
   } catch (err) {
     console.log(err);

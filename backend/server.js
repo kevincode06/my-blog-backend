@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors'); // Import CORS
 const bcrypt = require('bcryptjs');
 const bodyParser = require('body-parser');
 const db = require('./models/db'); // Import MySQL database connection
@@ -8,10 +9,11 @@ const app = express();
 const port = process.env.PORT || 4000;
 
 // Middleware
+app.use(cors()); // Enable CORS for all origins
 app.use(bodyParser.json());
 
 // Get all blog posts
-app.get('/posts', async (req, res) => {
+app.get('/Posts', async (req, res) => {
     try {
         const [posts] = await db.query('SELECT * FROM blog_db.posts');
         res.json(posts);
@@ -54,8 +56,6 @@ app.delete('/posts/:id', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
-
-
 
 // Start the server
 app.listen(port, () => {
